@@ -245,6 +245,7 @@ def process_directory(yaml_file, directory, output_folder="logs"):
         report, model = summarize_test_report(tc_result_filename=json_path, validation_file=yaml_file, log_file=log_path)
         if not yang_model:
             yang_model = model
+       
         # Merge the report data into aggregated_report.
         for key, value in report.items():
             if key == 'summary':
@@ -288,7 +289,12 @@ def process_directory(yaml_file, directory, output_folder="logs"):
     
     # Generate the final HTML by replacing the placeholders in the template.
     final_html = template.replace("{{data}}", json.dumps(aggregated_report))
+    if yang_model.startswith("Model - "):
+        yang_model = yang_model.replace("Model - ", "", 1)
+
     final_html = final_html.replace("{{heading}}", yang_model if yang_model else "")
+    #final_html = final_html.replace("{{heading}}", yang_model if yang_model else "")
+  
     final_html = final_html.replace("{{treeData}}", json.dumps(tree))
     
     # Define the output file path
@@ -339,6 +345,7 @@ def summarize_test_report(tc_result_filename, path_to_platform_support_dict=None
     if not input_yang_model:
         input_yang_model = 'Model - ' + data['labels'][0]
         input_yang_model = input_yang_model.title()
+ 
     
     # Retrieve platform support information from metadata if not provided
     if not path_to_platform_support_dict:
