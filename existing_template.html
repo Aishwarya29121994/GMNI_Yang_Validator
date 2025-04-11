@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Consolidated - Yang-GNMI Validator Test Report</title>
+    <title>Consolidated - Yang Model Report</title>
     <link
       rel="stylesheet"
       type="text/css"
@@ -513,6 +513,7 @@
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
         transition: border 0.3s, background-color 0.3s, box-shadow 0.3s;
         cursor: pointer;
+        flex: 0 0 300px;
       }
 
       .operation-card:hover {
@@ -767,7 +768,7 @@
 
       /* Headings & Expand/Collapse Buttons */
       .display-4 {
-        font-size: 25px;
+        font-size: 21px;
         position: absolute; /* Corrected from fixed to sticky */
         top: 0; /* Stick to the top of the page */
         left: 0;
@@ -776,7 +777,7 @@
         text-align: center;
         z-index: 1000; /* Ensure it stays on top */
         box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for better visibility */
-        padding: 2px;
+        padding: 8px;
     }
 
       #expandViewBtn {
@@ -946,6 +947,14 @@
         gap: 8px;
         margin-bottom: 5px;
       }
+      .center-icon {
+    display: block;       /* Makes the icon act as a block element */
+    font-size: 35px;      /* Retain the icon size */
+    color: #bdbdbd;       /* Retain the color */
+    margin-left: 115px;
+    margin-top: 45px;
+}
+
 
     </style>
   </head>
@@ -954,8 +963,8 @@
     <div width="100%">
       <header class="text-center text-white">
         <br />
-        <h4 class="display-4">
-          Path Level Yang-GNMI Validator Report
+        <h4 class="display-4" >
+          Yang Model Report
           <span class="small-arrow">&#9654;</span> {{heading}}
         </h4>
         <!--   <p class="h3" color="black">{{heading}}</p> -->
@@ -1192,7 +1201,7 @@
           if (typeof value !== 'string') return ''; // Return no color if value is not string
           const normalizedValue = value.toUpperCase();
           if (normalizedValue === 'PASS') return 'green';
-          if (normalizedValue === 'FAIL') return 'red';
+          if (normalizedValue === 'FAIL'|| normalizedValue === 'ERROR') return 'red';
           return 'orange'; // Default for all other cases
           }
             function populateIndividualSummaryTable(dataObj, path, statusType, isMultiple) {
@@ -1288,7 +1297,7 @@
                       let complianceMessageDisplay = Array.isArray(complianceValue) ? complianceValue[1] : "";
 
                       newRow.innerHTML = `
-                        <td>${complianceKey + ': ' + complianceItem['description']}</td>
+                        <td>${complianceKey.replace(/_/g, " ") + ': ' + complianceItem['description']}</td>
                         <td style="color: ${getStatusColor(complianceValueDisplay === null ? 'SKIP' : complianceValueDisplay)}; font-weight: bold;">
                           ${complianceValueDisplay === null ? 'SKIP' : complianceValueDisplay}
                         </td>
@@ -1532,8 +1541,7 @@
                       } else {
                         // No compliance data => show icon instead
                         complianceDetails = `
-                          <i class="bi bi-x-circle"
-                            style="font-size: 35px; color: #bdbdbd; margin-top: 35px; margin-left: 75px;">
+                          <i class="bi bi-x-circle center-icon">
                           </i>
                           <br>
                           <br>
@@ -1549,7 +1557,7 @@
                         <div class="card-encoding" style="position: absolute; top: 10px; left: 10px;">
                           ${encodingDetails}
                         </div>
-                        <h3>${testname + ' ' + new_key}</h3>
+                        <h3>${pathData[new_key]['parent_key'].split('_')[0] + ' ' + new_key}</h3>
                         <ul>
                           ${complianceDetails}
                         </ul>
@@ -1569,7 +1577,8 @@
 
                           // Add 'active' class to the clicked card (highlight)
                           card.classList.add('active');
-
+                           // Scroll to the active card smoothly and center it in view
++                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                           // Call the report generation and summary population functions
                           generateReport(path, key, status, isMultiple);
                           populateIndividualSummaryTable(data, path, key,isMultiple);
@@ -1579,7 +1588,7 @@
                         // Track the first PASS and FAIL card for default selection
                         if (status === 'PASS' && !firstPassCard) {
                           firstPassCard = card;
-                        } else if (status === 'FAIL' && !firstFailCard) {
+                        } else if ((status === 'FAIL' || status === 'ERROR') && !firstFailCard) {
                           firstFailCard = card;
                         }
                       } else {
@@ -1602,10 +1611,25 @@
                     // **Modified Logic End**
 
                     // Automatically click the first PASS or FAIL card by default (only if data is available)
-                    if (firstPassCard) {
+                    const overallPathStatus = data[path].status && data[path].status.status
+  ? data[path].status.status.toUpperCase() 
+  : '';
+
+                    // Auto-select the appropriate card based on the overall path status:
+                    if (overallPathStatus.includes('PASS') && firstPassCard) {
+                      // If the overall path status is passing, select a passing operation card.
+                      firstPassCard.classList.add('active');
+                      firstPassCard.click();
+                    } else if (overallPathStatus.includes('FAIL') || overallPathStatus.includes('ERROR') && firstFailCard) {
+                      // If the overall path status is failing, select a failing operation card.
+                      firstFailCard.classList.add('active');
+                      firstFailCard.click();
+                    } else if (firstPassCard) {
+                      // Fallback: if no overall status is available but a pass card exists, click it.
                       firstPassCard.classList.add('active');
                       firstPassCard.click();
                     } else if (firstFailCard) {
+                      // Fallback: if no pass card exists, click the failed card.
                       firstFailCard.classList.add('active');
                       firstFailCard.click();
                     }
@@ -2089,7 +2113,8 @@
                aria-expanded="false"
                aria-controls="${mainCollapseId}">
             <span class="folder-toggle-icon"><i class="bi bi-chevron-right rotate"></i></span>
-            <span class="folder-name"></span> {{heading}}
+            <span class="folder-name">{{ heading | replace('Model - ', '') }}</span>
+
 
           </div>
           <div class="collapse folder-content" id="${mainCollapseId}">
