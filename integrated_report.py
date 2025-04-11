@@ -6,8 +6,18 @@ import subprocess
 import argparse
 
 def run_report_script(script_path, args_list):
+    # cmd = [sys.executable, script_path] + args_list
+    # subprocess.run(cmd, check=True)
     cmd = [sys.executable, script_path] + args_list
-    subprocess.run(cmd, check=True)
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        error_message = str(e)
+        if "No valid JSON files found" in error_message:
+            print("Error: JSON file not found. Please ensure the JSON file exists in the specified directory.")
+        else:
+            print(f"Error executing script '{script_path}': {e}")
+        # sys.exit(1)
 
 def get_latest_html_report(directory):
     html_files = glob.glob(os.path.join(directory, "*.html"))
