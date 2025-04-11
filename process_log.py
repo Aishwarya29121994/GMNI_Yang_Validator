@@ -433,7 +433,13 @@ def parse_log_content(content):
             f'<br>{processed_testcase}</div>'
         )
      
-        testcase_data[tc_id] = final_html
+         # Ensure the key is unique if duplicate TC_ID exists
+        unique_key = tc_id
+        counter = 0
+        while unique_key in testcase_data:
+            counter += 1
+            unique_key = f"{tc_id}_{counter}"
+        testcase_data[unique_key] = final_html
 
     return {"testcase_data": testcase_data}
 
